@@ -11,7 +11,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 
 def main():
-
+    
     if len(sys.argv) != 2:
         sys.exit("Te faltan parametros")
     
@@ -134,12 +134,14 @@ def findMatch(filtered_match_driver, status):
 
 def find_time_of_match(filtered_match_driver):
     match_time = filtered_match_driver.find_element(By.XPATH, ".//div/div/a/span[@class = 'date_bah']")
-    date, time = match_time.text.split(" ")
-    hours, minutes = time.split(":")
+    _, time = match_time.text.split(" ")
+    hours, _ = time.split(":")
     return hours
 
 def abrirLink(top, bottom, link, num, matchTime):
-    if (bottom <= int(num) <= top) and (7 <= int(matchTime) <= 23 or 0 <= int(matchTime) <= 1):
+    num = int(num)
+    matchTime = int(matchTime)
+    if (bottom <= num <= top and (7 <= matchTime <= 23 or 0 <= matchTime <= 1)):
         webbrowser.open(link)
     time.sleep(3)
 
