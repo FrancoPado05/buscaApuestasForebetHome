@@ -91,11 +91,11 @@ def partidoCumple(partidoParticular):
         EC.presence_of_element_located((By.XPATH, ".//div[@class='fprc']"))
     )
     
-    local, visita = encontrarProbabilidades(driverPorbabilidades.text)
+    under, over = encontrarProbabilidades(driverPorbabilidades.text)
 
-    seleccion = local if criterio == 'over' else visita
+    seleccion = under if criterio == 'under' else over
     
-    condicionesCumplir(seleccion, partidoParticular)
+    return condicionesCumplir(seleccion, partidoParticular)
 
 
 def abrirPartidos(driverPartidosSeleccionados):
@@ -110,11 +110,11 @@ def abrirPartidos(driverPartidosSeleccionados):
 
 # Funciones 4
 def encontrarProbabilidades(driverPorbabilidades):
-    local = int(driverPorbabilidades[:2])
-    visita = int(driverPorbabilidades[2:])
+    under = int(driverPorbabilidades[:2])
+    over = int(driverPorbabilidades[2:])
 
-    if local + visita == 100:
-        return local, visita
+    if under + over == 100:
+        return under, over
 
     if int(driverPorbabilidades[:1]) + int(driverPorbabilidades[1:]) == 100:
         return int(driverPorbabilidades[:1]), int(driverPorbabilidades[1:])
@@ -132,7 +132,9 @@ def condicionesCumplir(seleccion, partidoParticular):
     if seleccion <= 70:
         return False
     
-    match_time = partidoParticular.find_element(By.XPATH, ".//div/div/a/span[@class = 'date_bah']")
+    match_time = WebDriverWait(partidoParticular, 20).until(
+        EC.presence_of_element_located((By.XPATH, ".//div/div/a/span[@class = 'date_bah']"))
+    )
     _, time = match_time.text.split(" ")
     hours, _ = time.split(":")
     if 1 < int(hours) < 7:
