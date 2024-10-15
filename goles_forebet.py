@@ -129,7 +129,7 @@ def encontrarProbabilidades(driverPorbabilidades):
         return 0, 100
 
 def condicionesCumplir(seleccion, partidoParticular):
-    if seleccion <= 70:
+    if seleccion <= 65:
         return False
     
     match_time = WebDriverWait(partidoParticular, 20).until(
