@@ -10,27 +10,18 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
-def main():
-    
-    if len(sys.argv) != 2:
-        sys.exit("Te faltan parametros")
-    
+
+def buscarPartidosDeGanador(dia):
+        
     url_today = "https://www.forebet.com/es/predicciones-para-hoy/predicciones-1x2"
     url_tomorrow = "https://www.forebet.com/es/predicciones-para-manana/predicciones-1x2"
 
-    if sys.argv[1].casefold() == "today":
+    if dia.casefold() == "today":
         url = url_today
-    elif sys.argv[1].casefold() == "tomorrow":
+    elif dia.casefold() == "tomorrow":
         url = url_tomorrow
-    elif sys.argv[1] == "add":
-        decision = input(
-            "Que queres modificar:\n 1. favourite_leagues.txt\n 2. not_interested_leagues.txt\n"
-        )
-        switch_case(decision)
-        sys.exit("Se ha modificado el archivo correctamente")
     else:
         sys.exit("today o tomorrow")
-
 
     #service quedo de cuando no usaba seleniumbase para evitar cloudflare
     service = Service(executable_path="chromedriver.exe")
@@ -76,30 +67,22 @@ def main():
 
 
 def clickMoreMatchesButton(webpage_driver):
-    elements = WebDriverWait(webpage_driver, 20).until(
-        EC.presence_of_all_elements_located((By.XPATH, '//span[text()="Más"]'))
+    pinParaMoverse = WebDriverWait(webpage_driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, "//div[@id='f-slog']"))
     )
-    for mas in elements:
-        element = mas
-        # Desplázate hasta el elemento
+
+    # Desplázate hasta el elemento
     actions = ActionChains(webpage_driver)
-    actions.move_to_element(mas).perform()
+    actions.move_to_element(pinParaMoverse).perform()
 
+    try:
+        masButton = WebDriverWait(webpage_driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="mrows"]/span'))
+        )
         # Haz clic en el elemento "Más"
-    mas.click()
-
-def switch_case(decision):
-    match decision:
-        case "1":
-            with open("favourite_leagues.txt", "a") as file:
-                new_league = input("Que liga deseas agregar: ")
-                file.write(f', "{new_league}"')
-
-        case "2":
-            with open("not_interested_leagues.txt", "a") as file:
-                new_league = input("Que liga deseas agregar: ")
-                file.write(f', "{new_league}"')
-
+        masButton.click()
+    except:
+        pass
 
 def filterMatch(match_driver):
     league = match_driver.find_element(By.XPATH, ".//div/div/span[@class = 'shortTag']")
@@ -144,7 +127,3 @@ def abrirLink(top, bottom, link, num, matchTime):
     if (bottom <= num <= top and (7 <= matchTime <= 23 or 0 <= matchTime <= 1)):
         webbrowser.open(link)
     time.sleep(3)
-
-
-if __name__ == "__main__":
-    main()
