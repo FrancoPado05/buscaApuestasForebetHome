@@ -10,14 +10,16 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
-
+from datetime import datetime, timedelta
 
 def buscarPartidosDeGoles(dia):
 
+    today = datetime.today()
     if dia == 'today':
-        url = 'https://www.forebet.com/es/predicciones-para-hoy/predicciones-bajo-mas-2-5-goles'
+        url = f'https://www.forebet.com/es/predicciones-de-futbol/predicciones-bajo-mas-2-5-goles/{today.strftime("%Y-%m-%d")}'
     elif dia == 'tomorrow':
-        url = 'https://www.forebet.com/es/predicciones-para-manana/predicciones-bajo-mas-2-5-goles'
+        tomorrow = today + timedelta(days=1)
+        url = f'https://www.forebet.com/es/predicciones-de-futbol/predicciones-bajo-mas-2-5-goles/{tomorrow.strftime("%Y-%m-%d")}'
     elif dia == 'otro':
         url = input('Poner link aqui: ')
 
@@ -69,21 +71,23 @@ def buscarPartidos(driver, tocoBotonMas):
 
 # Funciones 3
 def clickMoreMatchesButton(webpage_driver):
+
     pinParaMoverse = WebDriverWait(webpage_driver, 20).until(
         EC.presence_of_element_located((By.XPATH, "//div[@id='f-slog']"))
     )
 
-    # Desplázate hasta el elemento
-    actions = ActionChains(webpage_driver)
-    actions.move_to_element(pinParaMoverse).perform()
 
     try:
         masButton = WebDriverWait(webpage_driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="mrows"]/span'))
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="mrows"]/span'))
         )
+        # Desplázate hasta el elemento
+        actions = ActionChains(webpage_driver)
+        actions.move_to_element(pinParaMoverse).perform()
         # Haz clic en el elemento "Más"
         masButton.click()
     except:
+        print('No toco el boton')
         return False
     
     return True
