@@ -10,13 +10,13 @@ def modificarArchivos():
 def switch_case(decision):
     match decision:
         case "1":
-            with open("favourite_leagues.txt", "a") as file:
+            with open("../../assets/files/favourite_leagues.txt", "a") as file:
                 new_league = input("Que liga deseas agregar: ")
                 file.write(f', "{new_league}"')
                 sys.exit("Se ha modificado el archivo correctamente")
 
         case "2":
-            with open("not_interested_leagues.txt", "a") as file:
+            with open("../../assets/files/not_interested_leagues.txt", "a") as file:
                 new_league = input("Que liga deseas agregar: ")
                 file.write(f', "{new_league}"')
                 sys.exit("Se ha modificado el archivo correctamente")

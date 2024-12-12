@@ -12,6 +12,8 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime, timedelta
 
+from undetected_chromedriver import Chrome, ChromeOptions
+
 def buscarPartidosDeGoles(dia):
 
     today = datetime.today()
@@ -39,7 +41,21 @@ def testeosDeComando(dia):
         sys.exit('today, tomorrow u otro')
 
 def abrirPagina(url):
-    driver = Driver(uc=True)
+    # ------------------------- OPCION 1 -------------------------
+    # driver = Driver(uc=True) 
+ 
+    # ------------------------- OPCION 2 -------------------------
+    # options = Options()
+    # options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    # driver = webdriver.Chrome(options=options)
+
+    options = ChromeOptions()
+    options.add_argument("--start-maximized")  # Inicia el navegador maximizado
+    options.add_argument("--disable-blink-features=AutomationControlled")  # Oculta la automatización
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")  # Agregar un User-Agent personalizado
+
+    # Iniciar el driver con opciones y UC habilitado
+    driver = Chrome(options=options, use_subprocess=True)
 
     driver.get(url)
 
@@ -73,9 +89,8 @@ def buscarPartidos(driver, tocoBotonMas):
 def clickMoreMatchesButton(webpage_driver):
 
     pinParaMoverse = WebDriverWait(webpage_driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, "//div[@id='f-slog']"))
+        EC.visibility_of_element_located((By.XPATH, "//div[@id='f-slog']"))
     )
-
 
     try:
         masButton = WebDriverWait(webpage_driver, 20).until(
@@ -138,22 +153,11 @@ def encontrarProbabilidades(driverPorbabilidades):
 def condicionesCumplirGenerales(seleccion, partidoParticular):
     if seleccion <= 65:
         return False
-    
-    match_time = WebDriverWait(partidoParticular, 20).until(
-        EC.presence_of_element_located((By.XPATH, ".//div/div/a/span[@class = 'date_bah']"))
-    )
-    try:
-        _, time = match_time.text.split(" ")
-    except ValueError:
-        return False
-    hours, _ = time.split(":")
-    if 1 < int(hours) < 7:
-        return False
-    
+        
     league = WebDriverWait(partidoParticular, 20).until(
         EC.presence_of_element_located((By.XPATH, ".//div/div/span[@class = 'shortTag']"))
     )
-    if league.text in open("not_interested_leagues.txt").read():
+    if league.text in open("../../assets/files/not_interested_leagues.txt").read():
         return False
     
     return True

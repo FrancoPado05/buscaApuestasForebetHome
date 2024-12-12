@@ -1,11 +1,12 @@
 import busca_forebet
 import goles_forebet
 import modificar_archivos
+import gol_HT
 
 def main():
     
     menu = input(
-        '1. GOLES\n2.GANADOR DE PARTIDO\n3.AMBOS ANOTAN\n4.ADD\nELECCION: '
+        '1. GOLES\n2.GANADOR DE PARTIDO\n3.GOL HT\n4.ADD\nELECCION: '
         )
 
     match menu:
@@ -17,7 +18,9 @@ def main():
             busca_forebet.buscarPartidosDeGanador(dia)
             
         case '3':
-            pass
+            dia = input('Today o Tomorrow: ')
+            gol_HT.buscarPartidosGolHT(dia)
+
         case '4':
             modificar_archivos.modificarArchivos()
 

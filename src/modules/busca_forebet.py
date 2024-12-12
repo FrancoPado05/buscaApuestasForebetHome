@@ -11,6 +11,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
+from undetected_chromedriver import Chrome, ChromeOptions
+
 def buscarPartidosDeGanador(dia):
         
     url_today = "https://www.forebet.com/es/predicciones-para-hoy/predicciones-1x2"
@@ -26,44 +28,59 @@ def buscarPartidosDeGanador(dia):
     #service quedo de cuando no usaba seleniumbase para evitar cloudflare
     service = Service(executable_path="C:\Program Files\Google\Chrome\Driver\chromedriver.exe")
     
-    driver = Driver(uc=True)
+    # ------------------------- OPCION 1 -------------------------
+    # driver = Driver(uc=True) 
+ 
+    # ------------------------- OPCION 2 -------------------------
+    # options = Options()
+    # options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    # driver = webdriver.Chrome(options=options)
 
-    driver.get(url)
+    try:
+        options = ChromeOptions()
+        options.add_argument("--start-maximized")  # Inicia el navegador maximizado
+        options.add_argument("--disable-blink-features=AutomationControlled")  # Oculta la automatización
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")  # Agregar un User-Agent personalizado
 
-    clickMoreMatchesButton(driver)
+        # Iniciar el driver con opciones y UC habilitado
+        driver = Chrome(options=options, use_subprocess=True)
 
-    time.sleep(10)
+        driver.get(url)
 
-    entro_a_rcnt_tr_0 = 0
+        clickMoreMatchesButton(driver)
 
-    rcnt_list = ["rcnt tr_1", "rcnt tr_2"]
-    
-    for _ in range(2):
-        if entro_a_rcnt_tr_0 == 0:
-            rcnt = WebDriverWait(driver, 10).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//div[@class = 'rcnt tr_0']"))
-            )
-            counter_to_avoid_match = 0
-            for in_rcnt in rcnt:
-                if (len(rcnt) - 2) == counter_to_avoid_match:
-                    break
+        time.sleep(10)
 
-                counter_to_avoid_match += 1
-                selected_match, status = filterMatch(in_rcnt)
-                if selected_match != None:
-                    findMatch(selected_match, status)
+        entro_a_rcnt_tr_0 = 0
 
-        elif entro_a_rcnt_tr_0 == 1:
-            for search in rcnt_list:
-                rcnt = driver.find_elements(By.XPATH, f"//div[@class = '{search}']")
+        rcnt_list = ["rcnt tr_1", "rcnt tr_2"]
+        
+        for _ in range(2):
+            if entro_a_rcnt_tr_0 == 0:
+                rcnt = WebDriverWait(driver, 10).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//div[@class = 'rcnt tr_0']"))
+                )
+                counter_to_avoid_match = 0
                 for in_rcnt in rcnt:
+                    if (len(rcnt) - 2) == counter_to_avoid_match:
+                        break
+
+                    counter_to_avoid_match += 1
                     selected_match, status = filterMatch(in_rcnt)
                     if selected_match != None:
                         findMatch(selected_match, status)
-        entro_a_rcnt_tr_0 = 1
-    driver.close()
-    
-    print("ANALISIS FINALIZADO")
+
+            elif entro_a_rcnt_tr_0 == 1:
+                for search in rcnt_list:
+                    rcnt = driver.find_elements(By.XPATH, f"//div[@class = '{search}']")
+                    for in_rcnt in rcnt:
+                        selected_match, status = filterMatch(in_rcnt)
+                        if selected_match != None:
+                            findMatch(selected_match, status)
+            entro_a_rcnt_tr_0 = 1
+    finally:
+        driver.quit()
+        print("ANALISIS FINALIZADO")
 
 
 def clickMoreMatchesButton(webpage_driver):
@@ -87,10 +104,10 @@ def clickMoreMatchesButton(webpage_driver):
 def filterMatch(match_driver):
     league = match_driver.find_element(By.XPATH, ".//div/div/span[@class = 'shortTag']")
     status = -1
-    if league.text in open('favourite_leagues.txt').read():
+    if league.text in open('../../assets/files/favourite_leagues.txt').read():
         status = 1
         return match_driver, status
-    elif league.text not in open("not_interested_leagues.txt").read():
+    elif league.text not in open("../../assets/files/not_interested_leagues.txt").read():
         status = 0
         return match_driver, status
     else:
@@ -103,27 +120,17 @@ def findMatch(filtered_match_driver, status):
         recent = filtered_match_driver.find_element(By.XPATH, ".//div/span[@class = 'fpr']")
     except NoSuchElementException:
         recent = filtered_match_driver.find_element(By.XPATH, ".//div/span/b")
-    home_team = filtered_match_driver.find_element(By.XPATH, ".//div/div/a/span[@class = 'homeTeam']")
-    away_team = filtered_match_driver.find_element(By.XPATH, ".//div/div/a/span[@class = 'awayTeam']")
-    time = find_time_of_match(filtered_match_driver)
     dirty_link = filtered_match_driver.find_element(By.TAG_NAME, "a")
     link = dirty_link.get_attribute("href")
     if status == 1:
         if forepr.text == "1" or forepr.text == "2":
-            abrirLink(100, 50, link, recent.text, time)
+            abrirLink(100, 50, link, recent.text)
     elif status == 0:
         if forepr.text == "1":
-            abrirLink(100, 50, link, recent.text, time)
+            abrirLink(100, 50, link, recent.text)
 
-def find_time_of_match(filtered_match_driver):
-    match_time = filtered_match_driver.find_element(By.XPATH, ".//div/div/a/span[@class = 'date_bah']")
-    _, time = match_time.text.split(" ")
-    hours, _ = time.split(":")
-    return hours
-
-def abrirLink(top, bottom, link, num, matchTime):
+def abrirLink(top, bottom, link, num):
     num = int(num)
-    matchTime = int(matchTime)
-    if (bottom <= num <= top and (7 <= matchTime <= 23 or 0 <= matchTime <= 1)):
+    if (bottom <= num <= top):
         webbrowser.open(link)
     time.sleep(3)

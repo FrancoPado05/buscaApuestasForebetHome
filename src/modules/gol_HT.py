@@ -11,19 +11,16 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
-if sys.argv[1] == 'today':
-    url = 'https://www.forebet.com/es/predicciones-para-hoy/predicciones-bajo-mas-2-5-goles'
-elif sys.argv[1] == 'tomorrow':
-    url = 'https://www.forebet.com/es/predicciones-para-manana/ambos-equipos-anotaran'
-elif sys.argv[1] == 'otro':
-    url = input('Poner link aqui: ')
+def buscarPartidosGolHT(dia):
+    if dia == 'today':
+        url = "https://www.forebet.com/es/predicciones-para-manana/predicciones-1x2"
+    elif dia == 'tomorrow':
+        url = "https://www.forebet.com/es/predicciones-para-manana/predicciones-1x2"
 
-criterio = sys.argv[2]
+    
+    testeosDeComando(dia)
 
-def main():
-    testeosDeComando(sys.argv)
-
-    driver, tocoBotonMas = abrirPagina()
+    driver, tocoBotonMas = abrirPagina(url)
 
     buscarPartidos(driver, tocoBotonMas)
 
@@ -33,54 +30,24 @@ def main():
 
 # Funciones modificadas
 
-def chequeoEspecifico(link):
-
-    service = Service(executable_path="C:\Program Files\Google\Chrome\Driver\chromedriver.exe")
-    driverPartido = webdriver.Chrome(service=service)
-
-    driverPartido.get(link)
-    
-    prediccion = WebDriverWait(driverPartido, 20).until(
-        EC.presence_of_element_located((By.XPATH, ".//*[@id='m1x2_table']/div[3]/div[4]/span/span"))
-    )
-
-    return prediccion.text == 'X'
-
 def condicionesCumplirGenerales(seleccion, partidoParticular):
-    if seleccion <= 75:
-        return False
-    
-    match_time = WebDriverWait(partidoParticular, 20).until(
-        EC.presence_of_element_located((By.XPATH, ".//div/div/a/span[@class = 'date_bah']"))
-    )
-    try:
-        _, time = match_time.text.split(" ")
-    except ValueError:
-        return False
-    hours, _ = time.split(":")
-    if 1 < int(hours) < 7:
+    if seleccion <= 3:
         return False
     
     league = WebDriverWait(partidoParticular, 20).until(
         EC.presence_of_element_located((By.XPATH, ".//div/div/span[@class = 'shortTag']"))
     )
-    if league.text in open("not_interested_leagues.txt").read():
+    if league.text in open("../../assets/files/not_interested_leagues.txt").read():
         return False
     
     return True
 
 # Resto de funciones
-def testeosDeComando(argumentos):
-    if len(argumentos) != 3:
-        sys.exit('Te faltan o sobran parametros')
+def testeosDeComando(argumento):
+    if argumento not in ['today', 'tomorrow']:
+        sys.exit('today, tomorrow')
 
-    if argumentos[1] not in ['today', 'tomorrow', 'otro']:
-        sys.exit('today, tomorrow u otro')
-
-    if argumentos[2] not in ['over', 'under']:
-        sys.exit('over o under')
-
-def abrirPagina():
+def abrirPagina(url):
     driver = Driver(uc=True)
 
     driver.get(url)
@@ -137,34 +104,16 @@ def clickMoreMatchesButton(webpage_driver):
     return False
 
 def partidoCumpleGeneral(partidoParticular):
-    driverPorbabilidades = WebDriverWait(partidoParticular, 20).until(
-        EC.presence_of_element_located((By.XPATH, ".//div[@class='fprc']"))
-    )
-    
-    under, over = encontrarProbabilidades(driverPorbabilidades.text)
+    try:
+        resultado = WebDriverWait(partidoParticular, 20).until(
+            EC.presence_of_element_located((By.XPATH, ".//div[@class='ex_sc tabonly']"))
+        )
+    except:
+        return False
 
-    seleccion = under if criterio == 'under' else over
-    
-    return condicionesCumplirGenerales(seleccion, partidoParticular)
+    sumaDeGoles = sum(map(lambda x: int(x), resultado.text.split('-')))
 
-def encontrarProbabilidades(driverPorbabilidades):
-    under = int(driverPorbabilidades[:2])
-    over = int(driverPorbabilidades[2:])
-
-    if under + over == 100:
-        return under, over
-
-    if int(driverPorbabilidades[:1]) + int(driverPorbabilidades[1:]) == 100:
-        return int(driverPorbabilidades[:1]), int(driverPorbabilidades[1:])
-
-    if int(driverPorbabilidades[:2]) + int(driverPorbabilidades[2:]) == 100:
-        return int(driverPorbabilidades[:2]), int(driverPorbabilidades[2:])
-
-    if int(driverPorbabilidades[:3]) == 100:
-        return 100, 0
-
-    if int(driverPorbabilidades[3:]) == 100:
-        return 0, 100
+    return condicionesCumplirGenerales(sumaDeGoles, partidoParticular)
 
 def abrirPartidosSeleccionados(driverPartidosSeleccionados):
     for driverPartidoSeleccionado in driverPartidosSeleccionados:
@@ -173,7 +122,6 @@ def abrirPartidosSeleccionados(driverPartidosSeleccionados):
         )
         link = dirty_link.get_attribute("href")
         time.sleep(1)
-        # if chequeoEspecifico(link):
         webbrowser.open(link)
 
 if __name__ == "__main__":
